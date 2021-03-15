@@ -1,10 +1,14 @@
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV !== 'development') {
   require('dotenv').config()
 }
 
 const admin = require('firebase-admin');
 admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // handle private key newline characters
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL
+  })
 });
 const db = admin.firestore();
 const refreshCollectionName = 'refresh';
@@ -85,7 +89,7 @@ app.post('/syncSearchIndexes', async (req, res) => {
       await Promise.all([
         algoliaClient.initIndex('users').saveObjects(usersIndexObjects),
         algoliaClient.initIndex('decks').saveObjects(decksIndexObjects)
-      ])
+      ]);
     }
   } catch (err) {
     console.log(`Error in /syncSearchIndexes: ${err}`);
