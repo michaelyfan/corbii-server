@@ -52,13 +52,13 @@ app.get('/', (req, res) => {
 })
 
 app.post('/syncSearchIndexes', async (req, res) => {
-  // const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
-  // try {
-  //   await admin.auth().verifyIdToken(idToken);
-  // } catch (err) {
-  //   res.sendStatus(401);
-  //   return;
-  // }
+  const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
+  try {
+    await admin.auth().verifyIdToken(idToken);
+  } catch (err) {
+    res.sendStatus(401);
+    return;
+  }
 
   try {
     res.sendStatus(202);
@@ -97,13 +97,13 @@ app.post('/syncSearchIndexes', async (req, res) => {
 })
 
 app.post('/deleteCardSpacedRepData/:cardId', async (req, res) => {
-  // const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
-  // try {
-  //   await admin.auth().verifyIdToken(idToken);
-  // } catch (err) {
-  //   res.sendStatus(401);
-  //   return;
-  // }
+  const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
+  try {
+    await admin.auth().verifyIdToken(idToken);
+  } catch (err) {
+    res.sendStatus(401);
+    return;
+  }
 
   const cardId = req.params.cardId;
   if (!cardId) {
