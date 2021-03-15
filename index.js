@@ -12,9 +12,9 @@ const refreshKeyName = 'lastSyncTime';
 const algoliasearch = require('algoliasearch');
 const algoliaClient = algoliasearch(process.env.ALGOLIA_APP_ID, process.env.ALGOLIA_ADMIN_API_KEY);
 
-const express = require('express')
-const app = express()
-const port = 3000
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
 
 var { DateTime } = require('luxon');
 
