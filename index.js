@@ -172,19 +172,19 @@ app.post('/deleteDeckSpacedRepData/:deckId', async (req, res) => {
 
   const cardDataRef = db.collection('spacedRepData').where('deckId', '==', deckId);
   deleteCollection(cardDataRef).catch((e) => {
-    console.log('Error in /deleteCardSpacedRepData:', e);
+    console.log('Error in /deleteDeckSpacedRepData:', e);
   });
   res.sendStatus(202);
 })
 
 app.post('/deleteDeckSubcollections/:deckId', async (req, res) => {
-  const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
-  try {
-    await admin.auth().verifyIdToken(idToken);
-  } catch (err) {
-    res.sendStatus(401);
-    return;
-  }
+  // const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
+  // try {
+  //   await admin.auth().verifyIdToken(idToken);
+  // } catch (err) {
+  //   res.sendStatus(401);
+  //   return;
+  // }
 
   const deckId = req.params.deckId;
   if (!deckId) {
