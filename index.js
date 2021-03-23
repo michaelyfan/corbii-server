@@ -25,6 +25,45 @@ const port = process.env.PORT || 3000;
 var { DateTime } = require('luxon');
 
 /**
+ * Collection deletion method taken from https://firebase.google.com/docs/firestore/manage-data/delete-data#node.js_2
+ * Modified so that collection both collection references and queries
+ */
+async function deleteCollection(collectionReferenceOrQuery, batchSize=100) {
+  const query = collectionReferenceOrQuery.orderBy('__name__').limit(batchSize);
+
+  return new Promise((resolve, reject) => {
+    deleteQueryBatch(query, resolve).catch(reject);
+  });
+}
+
+/**
+ * Collection deletion helper method taken from https://firebase.google.com/docs/firestore/manage-data/delete-data#node.js_2
+ */
+async function deleteQueryBatch(query, resolve) {
+  const snapshot = await query.get();
+
+  const batchSize = snapshot.size;
+  if (batchSize === 0) {
+    // When there are no documents left, we are done
+    resolve();
+    return;
+  }
+
+  // Delete documents in a batch
+  const batch = db.batch();
+  snapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+  await batch.commit();
+
+  // Recurse on the next process tick, to avoid
+  // exploding the stack.
+  process.nextTick(() => {
+    deleteQueryBatch(db, query, resolve);
+  });
+}
+
+/**
  * Attempts search index sync. Returns void. You shouldn't wait for this to finish running anyway, since it can take a while.
  */
 async function runSearchIndexSync() {
@@ -110,18 +149,53 @@ app.post('/deleteCardSpacedRepData/:cardId', async (req, res) => {
     res.status(400).send('Please provide a cardId.');
   }
 
+  const cardDataRef = db.collection('spacedRepData').where('cardId', '==', cardId);
+  deleteCollection(cardDataRef).catch((e) => {
+    console.log('Error in /deleteCardSpacedRepData:', e);
+  });
+  res.sendStatus(202);
+})
+
+app.post('/deleteDeckSpacedRepData/:deckId', async (req, res) => {
+  const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
   try {
-    const cardDataRef = db.collection('spacedRepData').where('cardId', '==', cardId);
-    cardDataRef.get().then((querySnap) => {
-      querySnap.docs.forEach((queryDocSnap) => {
-        queryDocSnap.ref.delete().catch((err) => { console.log(`Error deleting card spaced rep data, data ID ${queryDocSnap.id}`) });
-      });
-    })
-    res.sendStatus(202);
-  } catch (e) {
-    console.log(`Error in /deleteCardSpacedRepData: ${e}`);
-    res.sendStatus(500);
+    await admin.auth().verifyIdToken(idToken);
+  } catch (err) {
+    res.sendStatus(401);
+    return;
   }
+
+  const deckId = req.params.deckId;
+  if (!deckId) {
+    res.status(400).send('Please provide a deckId.');
+  }
+
+  const cardDataRef = db.collection('spacedRepData').where('deckId', '==', deckId);
+  deleteCollection(cardDataRef).catch((e) => {
+    console.log('Error in /deleteCardSpacedRepData:', e);
+  });
+  res.sendStatus(202);
+})
+
+app.post('/deleteDeckSubcollections/:deckId', async (req, res) => {
+  const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
+  try {
+    await admin.auth().verifyIdToken(idToken);
+  } catch (err) {
+    res.sendStatus(401);
+    return;
+  }
+
+  const deckId = req.params.deckId;
+  if (!deckId) {
+    res.status(400).send('Please provide a deckId.');
+  }
+
+  const cardsRef = db.collection('decks').doc(deckId).collection('cards');
+  deleteCollection(cardsRef).catch((e) => { 
+    console.log('Error in /deleteDeckSubcollections: ', e);
+  });
+  res.sendStatus(202);
 })
 
 app.listen(port, () => {
