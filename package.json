@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "security": "npm audit --registry=https://registry.npmjs.org",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
