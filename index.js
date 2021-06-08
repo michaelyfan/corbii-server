@@ -90,6 +90,10 @@ app.get('/', (req, res) => {
   res.send('Corbii server is up.')
 })
 
+app.get('/helloWorld', (req, res) => {
+  res.send('Hello world!')
+})
+
 app.post('/syncSearchIndexes', async (req, res) => {
   const idToken = req.get('Authorization') ? req.get('Authorization').trim().split('Bearer ')[1] : null;
   try {
